@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:5.7
+    ports:
+      - '3306:3306'
+    restart: always
+    env_file: db.env
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=$${MYSQL_ROOT_PASSWORD} --execute \"SHOW DATABASES;\""
+      timeout: 5s
+      retries: 10
+      interval: 10s
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - api
+
+  app:
+    build: ./
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '5000:5000'
+    restart: always
+    env_file: app.env
+    environment:
+      DB_HOSTNAME: db:3306
+    networks:
+      - api
+
+networks:
+  api:
+    name: flaskapi
+
+volumes:
+  db_data:
