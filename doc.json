@@ -1,0 +1,150 @@
+{
+  "description": "API documentation",
+  "endpoints": [
+    {
+      "method": "GET",
+      "endpoint": "/api",
+      "description": "returns api documentation",
+      "status code": 200
+    },
+    {
+      "method": "GET",
+      "endpoint": "/",
+      "description": "returns title",
+      "status code": 200
+    },
+    {
+      "method": "GET",
+      "endpoint": "/api/students",
+      "description": "returns list of students",
+      "status code": 200
+    },
+    {
+      "method": "GET",
+      "endpoint": "/api/students/get/<int:id>",
+      "description": "returns student entity by id",
+      "status code": 200,
+      "not found status code": 404
+    },
+    {
+      "method": "POST",
+      "endpoint": "/api/students/add",
+      "params": {
+        "name": {
+          "description": "student name",
+          "type": "String",
+          "required": true,
+          "unique": false
+        },
+        "email": {
+          "description": "student name",
+          "type": "String",
+          "required": true,
+          "unique": true
+        },
+        "age": {
+          "description": "student age",
+          "type": "Integer",
+          "required": true,
+          "unique": false
+        },
+        "cellphone": {
+          "description": "student cellphone",
+          "type": "String",
+          "required": true,
+          "unique": true
+        }
+      },
+      "description": "creates student entity",
+      "status code": 201
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/api/deleteStudent/<int:id>",
+      "description": "delete student entity by id",
+      "status code": 200,
+      "not found status code": 404
+    },
+    {
+      "method": "PATCH",
+      "endpoint": "/api/students/modify/<int:id",
+      "params": {
+        "name": {
+          "description": "student name",
+          "type": "String",
+          "required": false,
+          "unique": false
+        },
+        "email": {
+          "description": "student name",
+          "type": "String",
+          "required": false,
+          "unique": true
+        },
+        "age": {
+          "description": "student age",
+          "type": "Integer",
+          "required": false,
+          "unique": true
+        },
+        "cellphone": {
+          "description": "student cellphone",
+          "type": "String",
+          "required": false,
+          "unique": true
+        }
+      },
+      "description": "partially update student entity by id",
+      "status code": 200,
+      "not found status code": 404,
+      "no input data status code": 400
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/api/students/change/<int:id>",
+      "params": {
+        "name": {
+          "description": "student name",
+          "type": "String",
+          "required": true,
+          "unique": false
+        },
+        "email": {
+          "description": "student name",
+          "type": "String",
+          "required": true,
+          "unique": true
+        },
+        "age": {
+          "description": "student age",
+          "type": "Integer",
+          "required": true,
+          "unique": false
+        },
+        "cellphone": {
+          "description": "student cellphone",
+          "type": "String",
+          "required": true,
+          "unique": true
+        }
+      },
+      "description": "update all student entity by id",
+      "status code": 201,
+      "no input data status code": 400,
+      "not found status code": 404,
+      "validation error code": 422
+    },
+    {
+      "method": "GET",
+      "endpoint": "/api/health-check/ok",
+      "description": "pass health-check",
+      "status code": 200
+    },
+    {
+      "method": "GET",
+      "endpoint": "/api/health-check/bad",
+      "description": "bad health-check",
+      "status code": 500
+    }
+  ]
+}
