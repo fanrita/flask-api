@@ -1,0 +1,127 @@
+name: Reusable workflow
+
+on:
+  workflow_call:
+    secrets:
+      DOCKER_USERNAME:
+        description: 'needed for registry login'
+        required: true
+      DOCKER_TOKEN:
+        description: 'needed for registry login'
+        required: true
+      KEY:
+        description: 'needed for ssh'
+        required: true
+    inputs:
+      hosts:
+        description: 'Stringified JSON object listing target EC2 instanse'
+        default: '18.192.45.73'
+        required: false
+        type: string
+
+env:
+  REGISTRY: fanrita1/test
+
+jobs:
+
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+
+      - name: Git checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+
+  build_and_push:
+    runs-on: ubuntu-latest
+    name: Build and push docker image
+    needs: lint
+    outputs:
+      commit_hash: ${{ steps.commit_hash.outputs.commit_hash }}
+    steps:
+
+      - name: Git checkout
+        uses: actions/checkout@v3
+
+      - id: commit_hash
+        run: echo "::set-output name=commit_hash::${GITHUB_SHA::7}"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}:${{ steps.commit_hash.outputs.commit_hash }}
+  deploy:
+    strategy:
+      matrix:
+        hosts: ${{fromJson(inputs.hosts)}}
+    runs-on: ubuntu-latest
+    name: Deploy
+    needs: build_and_push
+    env:
+      USERNAME: ubuntu
+    steps:
+
+      - name: Git checkout
+        uses: actions/checkout@v3
+
+      - name: Deploy repo to Server
+        uses: easingthemes/ssh-deploy@v2.2.11
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.KEY }}
+          REMOTE_HOST: ${{ matrix.hosts }}
+          REMOTE_USER: ${{ env.USERNAME }}
+          TARGET: "/home/ubuntu/"
+          EXCLUDE: "/.github/"
+
+      - name: Deploy to EC2 instanse via SSH action
+        uses: appleboy/ssh-action@v0.1.3
+        with:
+          host: ${{ matrix.hosts }}
+          username: ${{ env.USERNAME }}
+          key: ${{ secrets.KEY }}
+          envs: ${{ secrets.DOCKER_USERNAME }}, ${{ secrets.DOCKER_TOKEN }}
+          port: 22
+          script: |
+            export IMAGE=${{ env.REGISTRY }}:${{ needs.build_and_push.outputs.commit_hash }}
+            # login docker
+            docker login -u $DOCKER_USERNAME -p $DOCKER_TOKEN
+            docker-compose down -v
+            docker-compose up -d
+
+  report:
+    strategy:
+      matrix:
+        hosts: ${{fromJson(inputs.hosts)}}
+    needs: deploy
+    runs-on: ubuntu-latest
+    name: Report
+    steps:
+
+      - name: Make Request
+        id: myRequest
+        uses: fjogeleit/http-request-action@v1
+        with:
+          method: 'GET'
+          url: "http://${{ matrix.hosts }}:5000"
+          customHeaders: '{"Content-Type": "application/json"}'
+
+      - name: Show Response
+        run: |
+          echo ${{ steps.myRequest.outputs.response }}

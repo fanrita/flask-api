@@ -1,0 +1,17 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/main.yml
+    with:
+      hosts: "[\"18.192.45.73\", \"3.124.217.12\"]"
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      KEY: ${{ secrets.KEY }}
